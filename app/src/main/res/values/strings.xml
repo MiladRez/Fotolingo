@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Fotolingo</string>
+    <string name="HP_translate_photo_button">Translate photo</string>
+    <string name="CP_launch_camera_button">Launch Camera</string>
+    <string name="captured_photo_desc">Placeholder for the image to be captured then translated</string>
+    <string name="CP_translate_button">Translate</string>
+</resources>
