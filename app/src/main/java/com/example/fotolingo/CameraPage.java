@@ -1,67 +1,203 @@
 package com.example.fotolingo;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
-import android.content.Intent;
+import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.net.Uri;
+import android.hardware.Camera;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.FrameLayout;
 
-import java.io.OutputStream;
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.services.vision.v1.Vision;
+import com.google.api.services.vision.v1.VisionRequestInitializer;
+
+import org.apache.commons.io.IOUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class CameraPage extends AppCompatActivity {
 
-    Button launchCamera;
-    ImageView capturedPhoto;
-    int REQUEST_IMAGE_CAPTURE = 1;
-    public static final int MY_PERMISSIONS_REQUEST_CAMERA = 100;
+    private Camera mCamera;
+    private CameraPreview mPreview;
+    private File pictureFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_page);
 
-        launchCamera = findViewById(R.id.launchCameraButton);
-        capturedPhoto = findViewById(R.id.capturedPhoto);
+        startCameraPreview();
+
+        Vision.Builder visionBuilder = new Vision.Builder( new NetHttpTransport(), new AndroidJsonFactory(), null);
+        visionBuilder.setVisionRequestInitializer(new VisionRequestInitializer("AIzaSyCGjUg6OfJ_YrBEHup0PhvoPJDgIcYQFc0"));
+
+        Vision vision = visionBuilder.build();
     }
 
-    public void launchCameraClickHandler(View v) {
-        Log.d("CameraPage", "Launch Camera button has been clicked!");
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            //Checks for storage permission
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    Log.d("CameraPage", "You do not have permissions");
-                } else {
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_CAMERA);
+    private byte[] convertImageToByteArray(final File imageFile) {
+        final byte[][] fileContent = new byte[1][1];
+        AsyncTask.execute(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void run() {
+                try {
+                    fileContent[0] = Files.readAllBytes(imageFile.toPath());
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+        });
+        return fileContent[0];
+    }
+
+    private void startCameraPreview() {
+        if (checkCameraHardware(this)) {
+            // Create an instance of Camera
+            mCamera = getCameraInstance();
+            Log.d("CAMERA PAGE", "Camera instance: " + mCamera);
+
+            mCamera.setDisplayOrientation(90);
+
+            // Create the Preview view and set it as the content of this activity
+            mPreview = new CameraPreview(this, mCamera);
+            FrameLayout preview = findViewById(R.id.camera_preview);
+            preview.addView(mPreview);
+
+            // Rotate the final saved image
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_BACK, info);
+            // check what the current rotation is in degrees
+            int degrees = this.getWindowManager().getDefaultDisplay().getRotation();
+            // rotate to landscape calculation
+            int rotate = (info.orientation - degrees + 360) % 360;
+
+            // Set the rotation parameter
+            Camera.Parameters params = mCamera.getParameters();
+            params.setRotation(rotate);
+            mCamera.setParameters(params);
+
+        } else {
+            Log.d("CAMERA PAGE", "Device does not have a camera");
         }
     }
 
+    // Add a listener to the Capture button
+    private void captureButtonClickHandler(View v) {
+        Log.d("CAMERA PAGE", "Capture button has been clicked!");
+        mCamera.takePicture(null,null, mPicture);
+    }
+
+    // Check to see if the device has a camera
+    private boolean checkCameraHardware(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+            // the device has a camera
+            return true;
+        } else {
+            // the device does NOT have a camera
+            return false;
+        }
+    }
+
+    // get an instance of the Camera object
+    public static Camera getCameraInstance() {
+        Camera c = null;
+        try {
+            c = Camera.open(); // attempt to get the Camera instance
+        } catch (Exception e) {
+            // Camera is not available
+            Log.d("CAMERA PAGE", "Camera is not available!");
+        }
+        return c; // returns null if camera is unavailable
+    }
+
+    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
+        @Override
+        public void onPictureTaken(byte[] bytes, Camera camera) {
+
+            pictureFile = getOutputMediaFile();
+            Log.d("CAMERA PAGE", "pictureFile: " + pictureFile);
+            if (pictureFile == null) {
+                Log.d("CAMERA PAGE", "Error creating image file, check storage permissions");
+                return;
+            }
+
+            try {
+                FileOutputStream fos = new FileOutputStream(pictureFile);
+                fos.write(bytes);
+                fos.close();
+            } catch (FileNotFoundException e) {
+                Log.d("CAMERA PAGE", "File not found: " + e.getMessage());
+            } catch (IOException e) {
+                Log.d("CAMERA PAGE", "Error accessing file: " + e.getMessage());
+            }
+        }
+    };
+
+    // Create a file for saving an image
+    private File getOutputMediaFile() {
+
+        // location in device to save images
+        File mediaStorageDir = new File(this.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Fotolingo");
+
+        // Create the storage directory if it does not exist
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d("CAMERA PAGE", "Failed to create directory");
+                return null;
+            }
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
+
+        return mediaFile;
+    }
+
+    // if application is paused, the camera is released
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            capturedPhoto.setImageBitmap(imageBitmap);
+    protected void onPause() {
+        super.onPause();
+        releaseCamera();
+    }
 
-            MediaStore.Images.Media.insertImage(this.getContentResolver(), imageBitmap, "CapturedImage", "image_desc");
+    // if application is resumed, the camera preview starts again
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startCameraPreview();
+    }
+
+    // releases camera resources once app is closed
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        releaseCamera();
+    }
+
+    // Release camera resource
+    private void releaseCamera() {
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
         }
     }
+
 }
