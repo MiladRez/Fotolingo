@@ -5,4 +5,5 @@
     <string name="captured_photo_desc">Placeholder for the image to be captured then translated</string>
     <string name="CP_translate_button">Translate</string>
     <string name="CaptureButton">Capture</string>
+    <string name="backButton">Back</string>
 </resources>

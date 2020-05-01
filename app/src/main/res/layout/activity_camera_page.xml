@@ -10,14 +10,31 @@
     <FrameLayout
         android:id="@+id/camera_preview"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent"
+        android:layout_gravity="center" >
 
-    <Button
-        android:id="@+id/button_capture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center"
-        android:onClick="captureButtonClickHandler"
-        android:text="@string/CaptureButton" />
+        <Button
+            android:id="@+id/button_capture"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/circle_button"
+            android:foreground="@android:drawable/ic_menu_camera"
+            android:onClick="captureButtonClickHandler"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/back_button"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="10dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/circle_button"
+            android:foreground="@drawable/abc_vector_test"
+            android:onClick="backButtonClickHandler"
+            android:text="@string/backButton" />
+    </FrameLayout>
+
 </LinearLayout>
