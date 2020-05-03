@@ -79,10 +79,14 @@ public class CameraPage extends AppCompatActivity {
 
     Translate translate;
 
+    String selectedLanguage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_page);
+
+        selectedLanguage = getIntent().getStringExtra("SelectedLanguage");
 
         startCameraPreview();
         startTextToSpeech();
@@ -114,7 +118,17 @@ public class CameraPage extends AppCompatActivity {
         lang1 = Locale.ENGLISH;
 
         //translated language
-        lang2 = Locale.FRENCH;
+        int i = 0;
+        Iterator iterator = supportedLanguages.entrySet().iterator();
+        while(iterator.hasNext()) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+
+            Locale entryLocale = (Locale) entry.getKey();
+
+            if (entryLocale.getDisplayLanguage().equals(selectedLanguage)) {
+                lang2 = entryLocale;
+            }
+        }
 
         translatedResultsLayout = findViewById(R.id.translatedResultsLayout);
 
@@ -264,15 +278,18 @@ public class CameraPage extends AppCompatActivity {
             }
         });
 
-        // start TTS on lang2
-        t2 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int i) {
-                if (i != TextToSpeech.ERROR) {
-                    t2.setLanguage(lang2);
+        // proprietary to include Persian language
+        if(!selectedLanguage.equals("Persian")) {
+            // start TTS on lang2
+            t2 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int i) {
+                    if (i != TextToSpeech.ERROR) {
+                        t2.setLanguage(lang2);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // if application is paused, the camera is released
@@ -281,9 +298,14 @@ public class CameraPage extends AppCompatActivity {
         releaseCamera();
         translatedResultsLayout.setVisibility(View.INVISIBLE);
 
-        if(t1 != null) {
+        if(t1 != null || t2 != null) {
             t1.stop();
             t1.shutdown();
+            // proprietary to include Persian language
+            if(!selectedLanguage.equals("Persian")) {
+                t2.stop();
+                t2.shutdown();
+            }
         }
         super.onPause();
     }
@@ -391,7 +413,16 @@ public class CameraPage extends AppCompatActivity {
         while(iterator.hasNext() && i < 5) {
             Map.Entry entry = (Map.Entry) iterator.next();
             Log.d("CAMERA_PAGE", entry.getValue() + ": " + entry.getKey());
-            String translatedText = translate(entry.getValue().toString(), supportedLanguages.get(lang2));
+
+            String translatedText;
+
+            // proprietary to include Persian language
+            if(selectedLanguage.equals("Persian")) {
+                translatedText = translate(entry.getValue().toString(), "fa");
+            } else {
+                translatedText = translate(entry.getValue().toString(), supportedLanguages.get(lang2));
+            }
+
             Log.d("CAMERA_PAGE", translatedText);
 
 //            Toast.makeText(getApplicationContext(), entry.getValue().toString() + ": " + translatedText, Toast.LENGTH_SHORT).show();
@@ -399,7 +430,13 @@ public class CameraPage extends AppCompatActivity {
             translatedResultsLayout.setVisibility(View.VISIBLE);
 
             lang1Title.setText(lang1.getDisplayLanguage());
-            lang2Title.setText(lang2.getDisplayLanguage());
+
+            // proprietary to include Persian language
+            if(selectedLanguage.equals("Persian")) {
+                lang2Title.setText("Persian");
+            } else {
+                lang2Title.setText(lang2.getDisplayLanguage());
+            }
 
             // populate results table
             if(i == 0) {
@@ -427,7 +464,12 @@ public class CameraPage extends AppCompatActivity {
 
             // initiate TTS
             t1.speak(entry.getValue().toString(), TextToSpeech.QUEUE_ADD, null);
-            t2.speak(translatedText, TextToSpeech.QUEUE_ADD, null);
+
+            // proprietary to include Persian language
+            if(!selectedLanguage.equals("Persian")) {
+                t2.speak(translatedText, TextToSpeech.QUEUE_ADD, null);
+            }
+
             i++;
         }
         pictureFile.delete();
