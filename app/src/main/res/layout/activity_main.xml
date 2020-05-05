@@ -6,14 +6,35 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/appTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="125dp"
+        android:fontFamily="sans-serif-smallcaps"
+        android:text="Fotolingo"
+        android:textColor="#367CF2"
+        android:textSize="60sp"
+        android:textStyle="bold" />
+
     <Spinner
         android:id="@+id/languageSelector"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="400dp"
+        android:layout_marginLeft="192dp"
+        android:layout_marginBottom="350dp"
         android:prompt="@string/spinner_prompt" />
+
+    <TextView
+        android:id="@+id/translateTo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/languageSelector"
+        android:layout_marginLeft="102dp"
+        android:text="Translate to:"
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/translatePhoto"
@@ -21,7 +42,17 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="250dp"
+        android:layout_marginBottom="200dp"
         android:onClick="translatePhotoClickHandler"
-        android:text="@string/HP_translate_photo_button" />
+        android:text="@string/HP_translate_photo_button"
+        android:textSize="16sp" />
+
+    <ImageView
+        android:id="@+id/appLogo"
+        android:layout_width="125dp"
+        android:layout_height="252dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="175dp"
+        app:srcCompat="@drawable/fotolingo_logo" />
+
 </RelativeLayout>

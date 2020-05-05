@@ -29,13 +29,12 @@
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_gravity="bottom"
+            android:layout_marginStart="10dp"
             android:layout_marginLeft="10dp"
             android:layout_marginBottom="20dp"
             android:background="@drawable/circle_button"
             android:foreground="@drawable/abc_vector_test"
-            android:onClick="backButtonClickHandler"
-            android:text="@string/backButton"
-            android:layout_marginStart="10dp" />
+            android:onClick="backButtonClickHandler" />
 
     </FrameLayout>
 
