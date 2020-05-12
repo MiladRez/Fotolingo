@@ -2,7 +2,7 @@
 Android app that translates captured photo into multiple different languages
 
 Home Page
-<img src="fotolingo-fotos">
+<img src="fotolingo-fotos.jpg">
 
 Camera Page
-<img src="fotolingo-fotos2">
+<img src="fotolingo-fotos2.jpg">
